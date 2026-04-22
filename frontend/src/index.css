@@ -1,0 +1,209 @@
+@import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Vazirmatn:wght@100..900&display=swap');
+
+:root {
+  font-family: 'Vazirmatn', system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  background-color: #0F0F0F; /* Dark background */
+  color: #e0e0e0;
+  direction: rtl;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  min-width: 320px;
+  min-height: 100vh;
+  justify-content: center;
+  background-color: #0F0F0F;
+}
+
+#root {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.salavat-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+
+.salavat-btn {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  transition: transform 0.1s, box-shadow 0.2s, filter 0.8s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+
+/* Default state: darker */
+.salavat-btn .salavat-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  filter: brightness(0.6) contrast(1.1);
+  transition: filter 0.8s ease-in-out;
+}
+
+/* Clicked state: brighter */
+.salavat-btn.clicked .salavat-image {
+  filter: brightness(1.2) contrast(1.2);
+}
+
+.salavat-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+}
+
+.click-feedback {
+  position: absolute;
+  bottom: 30px;
+  font-size: 1rem;
+  opacity: 0.8;
+  color: #a7ffeb;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.counter-display {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-label {
+  font-size: 1rem;
+  color: #9e9e9e; /* Muted text */
+}
+
+.stat-value {
+  font-size: 3rem;
+  font-weight: 300; /* Thin look */
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.divider {
+  width: 80%;
+  height: 1px;
+  background-color: #424242; /* Dark gray line */
+  margin: 10px 0;
+}
+
+.user-share {
+  margin-top: 30px;
+  font-size: 0.8rem;
+  color: #424242;
+}
+
+/* Auth Modal Styles - Keeping them functional but dark themed */
+.auth-btn {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background: transparent;
+  border: 1px solid #424242;
+  color: #9e9e9e;
+  padding: 5px 15px;
+  border-radius: 20px;
+  cursor: pointer;
+  font-family: 'Vazirmatn', sans-serif;
+}
+
+.auth-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: #1e1e1e;
+  padding: 30px;
+  border-radius: 15px;
+  width: 90%;
+  max-width: 400px;
+  color: white;
+  border: 1px solid #333;
+}
+
+.input-group {
+  margin-bottom: 15px;
+  text-align: right;
+}
+
+.input-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #bbb;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #333;
+  background: #2d2d2d;
+  color: white;
+  border-radius: 8px;
+  margin-top: 5px;
+  box-sizing: border-box;
+  font-family: 'Vazirmatn', sans-serif;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #004d40;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-family: 'Vazirmatn', sans-serif;
+  margin-top: 10px;
+}
+
+.close-btn {
+  background: transparent;
+  border: none;
+  color: #666;
+  float: left;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
