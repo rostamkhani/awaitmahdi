@@ -2,16 +2,143 @@
 <html lang="fa" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=5" />
+
+    <title>منتظر مهدی - Await Mahdi</title>
+    <meta name="description" content="برنامه شمارش صلوات و ذکر منتظر مهدی (عج). سریع، آفلاین و قابل نصب روی گوشی." />
+
+    <!-- Favicons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16.png" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+
+    <!-- PWA Manifest is auto-injected by vite-plugin-pwa at build time -->
+
+    <!-- Theme / UA Colors -->
+    <meta name="theme-color" content="#0F0F0F" />
+    <meta name="color-scheme" content="dark light" />
+    <meta name="msapplication-TileColor" content="#0F0F0F" />
+    <meta name="msapplication-TileImage" content="/icons/icon-144.png" />
+
+    <!-- iOS (Apple) PWA Support -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="منتظر مهدی" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-touch-icon-120.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon-180.png" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="منتظر مهدی - Await Mahdi" />
+    <meta property="og:description" content="برنامه شمارش صلوات و ذکر منتظر مهدی (عج)" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icons/icon-512.png" />
+
+    <script>
+      // Capture beforeinstallprompt as early as possible, BEFORE the React
+      // bundle loads. Some browsers fire this event almost immediately after
+      // the manifest + SW are detected; if we wait until React mounts we miss it.
+      (function () {
+        window.__pwaDeferredPrompt = null;
+        window.__pwaInstalled = false;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__pwaDeferredPrompt = e;
+          try { window.dispatchEvent(new CustomEvent('pwa-install-available')); } catch (_) {}
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__pwaInstalled = true;
+          window.__pwaDeferredPrompt = null;
+          try { window.dispatchEvent(new CustomEvent('pwa-installed')); } catch (_) {}
+        });
+      })();
+    </script>
+
+    <style>
+      /* App shell + splash — shown before React hydrates and for offline first-paint */
+      html, body {
+        background-color: #0F0F0F;
+        color: #e0e0e0;
+      }
+      .app-splash {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 24px;
+        background: radial-gradient(ellipse at center, #1a1a2e 0%, #0F0F0F 70%);
+        z-index: 9999;
+        transition: opacity 0.5s ease, visibility 0.5s;
+      }
+      .app-splash.is-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .app-splash img {
+        width: 140px;
+        height: 140px;
+        border-radius: 50%;
+        box-shadow: 0 0 40px rgba(255, 215, 150, 0.25);
+        animation: splash-pulse 2s ease-in-out infinite;
+      }
+      .app-splash .splash-title {
+        font-family: 'Vazirmatn', 'Tahoma', system-ui, sans-serif;
+        font-size: 1.2rem;
+        color: #e0e0e0;
+        letter-spacing: 0.5px;
+      }
+      .app-splash .splash-spinner {
+        width: 28px;
+        height: 28px;
+        border: 3px solid rgba(255, 255, 255, 0.15);
+        border-top-color: #d4af37;
+        border-radius: 50%;
+        animation: splash-spin 0.9s linear infinite;
+      }
+      @keyframes splash-spin { to { transform: rotate(360deg); } }
+      @keyframes splash-pulse {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 40px rgba(255, 215, 150, 0.25); }
+        50%      { transform: scale(1.04); box-shadow: 0 0 60px rgba(255, 215, 150, 0.45); }
+      }
+    </style>
     <meta name="apple-mobile-web-app-title" content="تعداد" />
     <title>Await Mahdi - مهدی منتظر</title>
   </head>
   <body>
     <div id="root"></div>
+    <div class="app-splash" id="app-splash">
+      <img src="/icons/icon-192.png" alt="منتظر مهدی" />
+      <div class="splash-title">منتظر مهدی</div>
+      <div class="splash-spinner" aria-hidden="true"></div>
+    </div>
+    <script>
+      // Hard cap: the splash is gone within 3s no matter what. If React mounts
+      // sooner, main.jsx hides it earlier.
+      (function () {
+        var MAX_MS = 3000;
+        var splash = document.getElementById('app-splash');
+        if (!splash) return;
+        var hide = function () {
+          if (!splash || splash.dataset.hidden === '1') return;
+          splash.dataset.hidden = '1';
+          splash.classList.add('is-hidden');
+          setTimeout(function () {
+            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 500);
+        };
+        window.__hideAppSplash = hide;
+        setTimeout(hide, MAX_MS);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

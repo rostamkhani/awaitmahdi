@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>آفلاین — منتظر مهدی</title>
+    <meta name="theme-color" content="#0F0F0F" />
+    <style>
+      html, body {
+        margin: 0;
+        height: 100%;
+        background: radial-gradient(ellipse at center, #1a1a2e 0%, #0F0F0F 70%);
+        color: #e0e0e0;
+        font-family: 'Vazirmatn', 'Tahoma', system-ui, sans-serif;
+      }
+      .wrap {
+        min-height: 100%;
+        display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
+        text-align: center; padding: 24px;
+      }
+      .icon { width: 128px; height: 128px; border-radius: 50%; box-shadow: 0 0 40px rgba(255,215,150,.2); }
+      h1 { font-size: 1.4rem; margin: 18px 0 6px; }
+      p { color: #b8b8b8; max-width: 440px; line-height: 1.8; }
+      button {
+        margin-top: 18px;
+        background: linear-gradient(135deg, #d4af37, #a97b28);
+        color: #111; border: 0; border-radius: 14px;
+        padding: 12px 28px; font-size: 1rem; cursor: pointer;
+        font-family: inherit; font-weight: 700;
+      }
+      button:active { transform: scale(0.97); }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <img class="icon" src="/icons/icon-192.png" alt="منتظر مهدی" />
+      <h1>ارتباط با اینترنت برقرار نیست</h1>
+      <p>شما در حالت آفلاین هستید. برخی بخش‌ها ممکن است تا زمان اتصال مجدد، محدود باشند. می‌توانید دوباره تلاش کنید.</p>
+      <button onclick="location.reload()">تلاش دوباره</button>
+    </div>
+  </body>
+</html>
