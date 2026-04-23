@@ -76,7 +76,7 @@
         gap: 24px;
         background: radial-gradient(ellipse at center, #1a1a2e 0%, #0F0F0F 70%);
         z-index: 9999;
-        transition: opacity 0.5s ease, visibility 0.5s;
+        transition: opacity 0.22s ease, visibility 0.22s;
       }
       .app-splash.is-hidden {
         opacity: 0;
@@ -121,21 +121,34 @@
       <div class="splash-spinner" aria-hidden="true"></div>
     </div>
     <script>
-      // Hard cap: the splash is gone within 3s no matter what. If React mounts
-      // sooner, main.jsx hides it earlier.
+      // Splash disappears as soon as React puts anything in #root, OR after
+      // a 1500 ms hard cap — whichever is first.
       (function () {
-        var MAX_MS = 3000;
+        var MAX_MS = 1500;
         var splash = document.getElementById('app-splash');
+        var root = document.getElementById('root');
         if (!splash) return;
+
         var hide = function () {
           if (!splash || splash.dataset.hidden === '1') return;
           splash.dataset.hidden = '1';
           splash.classList.add('is-hidden');
           setTimeout(function () {
             if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
-          }, 500);
+            if (observer) observer.disconnect();
+          }, 240);
         };
         window.__hideAppSplash = hide;
+
+        // Hide instantly the moment React hydrates the root
+        var observer = null;
+        if (root && 'MutationObserver' in window) {
+          observer = new MutationObserver(function () {
+            if (root.childNodes.length > 0) hide();
+          });
+          try { observer.observe(root, { childList: true }); } catch (_) {}
+        }
+
         setTimeout(hide, MAX_MS);
       })();
     </script>
