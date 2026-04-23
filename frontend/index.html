@@ -40,6 +40,26 @@
     <meta property="og:type" content="website" />
     <meta property="og:image" content="/icons/icon-512.png" />
 
+    <script>
+      // Capture beforeinstallprompt as early as possible, BEFORE the React
+      // bundle loads. Some browsers fire this event almost immediately after
+      // the manifest + SW are detected; if we wait until React mounts we miss it.
+      (function () {
+        window.__pwaDeferredPrompt = null;
+        window.__pwaInstalled = false;
+        window.addEventListener('beforeinstallprompt', function (e) {
+          e.preventDefault();
+          window.__pwaDeferredPrompt = e;
+          try { window.dispatchEvent(new CustomEvent('pwa-install-available')); } catch (_) {}
+        });
+        window.addEventListener('appinstalled', function () {
+          window.__pwaInstalled = true;
+          window.__pwaDeferredPrompt = null;
+          try { window.dispatchEvent(new CustomEvent('pwa-installed')); } catch (_) {}
+        });
+      })();
+    </script>
+
     <style>
       /* App shell + splash — shown before React hydrates and for offline first-paint */
       html, body {
@@ -100,6 +120,25 @@
       <div class="splash-title">منتظر مهدی</div>
       <div class="splash-spinner" aria-hidden="true"></div>
     </div>
+    <script>
+      // Hard cap: the splash is gone within 3s no matter what. If React mounts
+      // sooner, main.jsx hides it earlier.
+      (function () {
+        var MAX_MS = 5000;
+        var splash = document.getElementById('app-splash');
+        if (!splash) return;
+        var hide = function () {
+          if (!splash || splash.dataset.hidden === '1') return;
+          splash.dataset.hidden = '1';
+          splash.classList.add('is-hidden');
+          setTimeout(function () {
+            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 500);
+        };
+        window.__hideAppSplash = hide;
+        setTimeout(hide, MAX_MS);
+      })();
+    </script>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
