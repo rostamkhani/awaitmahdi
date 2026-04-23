@@ -36,6 +36,7 @@ function App() {
   const [authMode, setAuthMode] = useState('login'); // login or register
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showInfo, setShowInfo] = useState(false);
 
   const localCountRef = useRef(localCount);
 
@@ -228,6 +229,33 @@ function App() {
       <div className="user-share">
         {user ? `سهم شما: ${(stats.user_total + localCount).toLocaleString('fa-IR')}` : ''}
       </div>
+
+      <button
+        className="info-btn"
+        onClick={() => setShowInfo(true)}
+        aria-label="درباره برنامه"
+        title="درباره برنامه"
+      >
+        i
+      </button>
+
+      {showInfo && (
+        <div className="auth-modal" onClick={() => setShowInfo(false)}>
+          <div className="modal-content info-modal-content" onClick={(e) => e.stopPropagation()}>
+            <button className="close-btn" onClick={() => setShowInfo(false)}>×</button>
+            <h2>درباره برنامه</h2>
+            <div className="info-text">
+              <p>این برنامه با هدف تعجیل در فرج ، منجی عالم امام زمان علیه السلام .</p>
+              <p>در این برنامه دوستداران و منتظران امام زمان برای سلامتی و تعجیل در فرج ، با هم صلوات می فرستند .</p>
+              <p>در برنامه تعداد صلوات های تمامی منتظران در همان روز و در کل ، نمایش داده می شود .</p>
+              <p className="info-salavat">اللهم صل على محمد و آل محمد و عجل فرجهم</p>
+            </div>
+            <button className="submit-btn" onClick={() => setShowInfo(false)}>
+              باشه
+            </button>
+          </div>
+        </div>
+      )}
 
       {showAuth && (
         <div className="auth-modal">

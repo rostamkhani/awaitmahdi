@@ -138,6 +138,7 @@ body {
   border-radius: 20px;
   cursor: pointer;
   font-family: 'Vazirmatn', sans-serif;
+  display: none;
 }
 
 .auth-modal {
@@ -206,6 +207,64 @@ body {
   float: left;
   cursor: pointer;
   font-size: 1.5rem;
+}
+
+/* Info (about) button in the bottom-left corner */
+.info-btn {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #424242;
+  background: transparent;
+  color: #9e9e9e;
+  cursor: pointer;
+  font-family: 'Vazirmatn', serif;
+  font-style: italic;
+  font-size: 1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  z-index: 900;
+}
+
+.info-btn:hover {
+  color: #e0e0e0;
+  border-color: #80cbc4;
+  background: rgba(128, 203, 196, 0.08);
+}
+
+.info-modal-content {
+  text-align: right;
+}
+
+.info-modal-content h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.3rem;
+  color: #e0e0e0;
+}
+
+.info-text p {
+  margin: 0 0 12px 0;
+  line-height: 1.9;
+  color: #cfcfcf;
+  font-size: 0.95rem;
+}
+
+.info-text .info-salavat {
+  margin-top: 18px;
+  text-align: center;
+  font-family: 'Amiri', serif;
+  font-size: 1.25rem;
+  color: #a7ffeb;
+  direction: rtl;
 }
 
 /*
@@ -286,6 +345,14 @@ body {
     left: 10px;
     padding: 3px 10px;
     font-size: 0.8rem;
+  }
+
+  .info-btn {
+    width: 28px;
+    height: 28px;
+    bottom: 10px;
+    left: 10px;
+    font-size: 0.9rem;
   }
 }
 
