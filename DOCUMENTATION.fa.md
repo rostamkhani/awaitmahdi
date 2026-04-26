@@ -8,6 +8,19 @@
 
 ---
 
+## 0. نحوه تست
+
+- bakcend
+cd /media/rostam/disk2/Projects/taajil/awaitmahdi/awaitmahdi
+python3 -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+- frontend
+cd /media/rostam/disk2/Projects/taajil/code/frontend
+npm install
+npm run dev -- --host
+
+
+
 ## ۱. نحوه‌ی اجرای برنامه (Run)
 
 ### پیش‌نیازها

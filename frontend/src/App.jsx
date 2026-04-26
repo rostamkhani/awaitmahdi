@@ -200,19 +200,21 @@ function App() {
             alt="Salavat" 
             className="salavat-image"
           />
-          {localCount > 0 && (
-            <div className="click-feedback">
-               (+{localCount})
-            </div>
-          )}
         </button>
 
         <div className="counter-display">
-          <div className="stat-item">
-            <span className="stat-label">تعداد امروز</span>
-            <span className="stat-value">
-              <AnimatedCounter value={displayToday} duration={5000} />
-            </span>
+          <div className="today-stat-row">
+            <div className="stat-item">
+              <span className="stat-label">تعداد امروز</span>
+              <span className="stat-value">
+                <AnimatedCounter value={displayToday} duration={5000} />
+              </span>
+            </div>
+            {localCount > 0 && (
+              <div className="click-feedback">
+                (+{localCount})
+              </div>
+            )}
           </div>
           
           <div className="divider"></div>

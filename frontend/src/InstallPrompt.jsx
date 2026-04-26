@@ -5,20 +5,12 @@ const DISMISS_KEY = 'pwa_install_dismissed_at';
 const INSTALLED_KEY = 'pwa_installed';
 const DISMISS_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 1 day
 const INITIAL_DELAY_MS = 10_000; // 10 seconds
-
-const detectIOS = () => {
-  if (typeof navigator === 'undefined') return false;
-  const ua = navigator.userAgent || navigator.vendor || '';
-  const iOSClassic = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-  // iPadOS 13+ reports as Mac — use touch points to detect.
-const INITIAL_DELAY_MS = 10_000;                  // 10 seconds
-const ANDROID_FALLBACK_DELAY_MS = 15_000;         // If beforeinstallprompt never fires, still try
-
-/* ----- Environment detection ----- */
+const ANDROID_FALLBACK_DELAY_MS = 15_000;
 
 const ua = () => (typeof navigator !== 'undefined' ? (navigator.userAgent || navigator.vendor || '') : '');
 
 const detectIOS = () => {
+  if (typeof navigator === 'undefined') return false;
   const u = ua();
   const iOSClassic = /iPad|iPhone|iPod/.test(u) && !window.MSStream;
   const iPadOS = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
@@ -29,7 +21,6 @@ const detectAndroid = () => /Android/i.test(ua());
 
 const detectChromium = () => {
   const u = ua();
-  // Chrome, Edge, Brave, Samsung Internet, Opera — all Chromium-based and support beforeinstallprompt.
   return /Chrome|CriOS|EdgA|EdgiOS|SamsungBrowser|OPR|OPiOS/i.test(u);
 };
 
@@ -45,8 +36,6 @@ const isStandalone = () => {
 const wasDismissedRecently = () => {
   try {
     const ts = Number(localStorage.getItem(DISMISS_KEY) || 0);
-    if (!ts) return false;
-    return Date.now() - ts < DISMISS_COOLDOWN_MS;
     return Boolean(ts) && Date.now() - ts < DISMISS_COOLDOWN_MS;
   } catch {
     return false;
@@ -54,29 +43,31 @@ const wasDismissedRecently = () => {
 };
 
 const markDismissed = () => {
-  try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+  } catch {
+    /* storage unavailable */
+  }
 };
 
 const markInstalled = () => {
-  try { localStorage.setItem(INSTALLED_KEY, '1'); } catch { /* storage unavailable */ }
+  try {
+    localStorage.setItem(INSTALLED_KEY, '1');
+  } catch {
+    /* storage unavailable */
+  }
 };
 
 const isAlreadyInstalled = () => {
-  try { return localStorage.getItem(INSTALLED_KEY) === '1'; } catch { return false; }
+  try {
+    return localStorage.getItem(INSTALLED_KEY) === '1';
+  } catch {
+    return false;
+  }
 };
 
 export default function InstallPrompt() {
   const [visible, setVisible] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-
-  const deferredPromptRef = useRef(null);
-  const timerRef = useRef(null);
-  const iosRef = useRef(false);
-/* ----- Component ----- */
-
-export default function InstallPrompt() {
-  const [visible, setVisible] = useState(false);
-  // mode: 'native' | 'ios' | 'android-manual' | 'desktop-manual'
   const [mode, setMode] = useState('native');
 
   const deferredPromptRef = useRef(null);
@@ -87,21 +78,14 @@ export default function InstallPrompt() {
   useEffect(() => {
     if (isStandalone() || isAlreadyInstalled() || wasDismissedRecently()) {
       disabledRef.current = true;
-      return;
+      return undefined;
     }
 
     const ios = detectIOS();
-    iosRef.current = ios;
-    setIsIOS(ios);
-
-    const tryShow = () => {
-      if (disabledRef.current) return;
-      if (timerRef.current) return;
     const android = detectAndroid();
     const chromium = detectChromium();
     const firefoxAndroid = detectFirefoxAndroid();
 
-    // If the HTML bootstrap captured the event before React mounted, pick it up now.
     if (window.__pwaDeferredPrompt) {
       deferredPromptRef.current = window.__pwaDeferredPrompt;
     }
@@ -117,42 +101,23 @@ export default function InstallPrompt() {
       if (timerRef.current || disabledRef.current) return;
       timerRef.current = setTimeout(() => {
         timerRef.current = null;
-        if (disabledRef.current) return;
-        if (isStandalone() || wasDismissedRecently()) return;
-        if (deferredPromptRef.current || iosRef.current) {
-          setVisible(true);
-        }
-      }, INITIAL_DELAY_MS);
-    };
-
-    const onBeforeInstall = (e) => {
-      e.preventDefault();
-      deferredPromptRef.current = e;
-      tryShow();
-
         if (ios) {
           showWithMode('ios');
           return;
         }
         if (deferredPromptRef.current) {
           showWithMode('native');
-          return;
         }
-        // No native prompt yet; we'll rely on the fallback timer below.
       }, INITIAL_DELAY_MS);
     };
 
-    // Fallback: if we're on a Chromium/Android browser that SHOULD support the
-    // install prompt but beforeinstallprompt never fires (common — Chrome only
-    // fires it based on engagement heuristics), show a manual-instruction
-    // modal after a longer delay so the user still learns how to install.
     const scheduleFallback = () => {
       if (fallbackTimerRef.current || disabledRef.current) return;
       fallbackTimerRef.current = setTimeout(() => {
         fallbackTimerRef.current = null;
         if (disabledRef.current) return;
         if (isStandalone() || wasDismissedRecently()) return;
-        if (deferredPromptRef.current || ios) return; // handled elsewhere
+        if (deferredPromptRef.current || ios) return;
 
         if (android && (chromium || firefoxAndroid)) {
           showWithMode('android-manual');
@@ -166,11 +131,7 @@ export default function InstallPrompt() {
       e.preventDefault();
       deferredPromptRef.current = e;
       window.__pwaDeferredPrompt = e;
-      if (visible && mode !== 'native') {
-        setMode('native');
-      } else {
-        scheduleShow();
-      }
+      scheduleShow();
     };
 
     const onInstallAvailable = () => {
@@ -188,7 +149,6 @@ export default function InstallPrompt() {
     };
 
     const onInteract = () => {
-      tryShow();
       scheduleShow();
       window.removeEventListener('scroll', onInteract);
       window.removeEventListener('click', onInteract);
@@ -197,7 +157,6 @@ export default function InstallPrompt() {
     };
 
     window.addEventListener('beforeinstallprompt', onBeforeInstall);
-    window.addEventListener('appinstalled', onInstalled);
     window.addEventListener('pwa-install-available', onInstallAvailable);
     window.addEventListener('appinstalled', onInstalled);
     window.addEventListener('pwa-installed', onInstalled);
@@ -206,16 +165,7 @@ export default function InstallPrompt() {
     window.addEventListener('keydown', onInteract);
     window.addEventListener('touchstart', onInteract, { passive: true });
 
-    // On iOS beforeinstallprompt never fires. Start timer unconditionally (interaction or delay).
-    if (ios) tryShow();
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', onBeforeInstall);
-      window.removeEventListener('appinstalled', onInstalled);
-    // iOS will never fire beforeinstallprompt — start timer unconditionally.
-    if (ios) scheduleShow();
-    // Always schedule the fallback for Android/Chromium in case the native event
-    // never arrives (engagement thresholds, already-installed-on-another-profile, etc.).
+    if (ios || deferredPromptRef.current) scheduleShow();
     scheduleFallback();
 
     return () => {
@@ -227,22 +177,18 @@ export default function InstallPrompt() {
       window.removeEventListener('click', onInteract);
       window.removeEventListener('keydown', onInteract);
       window.removeEventListener('touchstart', onInteract);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-    };
+
       if (timerRef.current) clearTimeout(timerRef.current);
       if (fallbackTimerRef.current) clearTimeout(fallbackTimerRef.current);
       timerRef.current = null;
       fallbackTimerRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleInstall = async () => {
     const evt = deferredPromptRef.current;
     if (!evt) return;
+
     try {
       evt.prompt();
       const choice = await evt.userChoice;
@@ -286,48 +232,11 @@ export default function InstallPrompt() {
 
         <div className="pwa-install-text">
           <div className="pwa-install-title">منتظر مهدی</div>
-          <div className="pwa-install-subtitle">
-            برای تجربه بهتر، اپ را نصب کنید
-          </div>
+          <div className="pwa-install-subtitle">برای تجربه بهتر، اپ را نصب کنید</div>
         </div>
 
-        {isIOS ? (
-          <div className="pwa-install-ios">
-            <p className="pwa-install-ios-hint">
-              برای نصب روی آیفون/آیپد:
-            </p>
-            <ol className="pwa-install-ios-steps">
-              <li>
-                <span>روی دکمه اشتراک‌گذاری بزنید</span>
-                <span className="ios-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <path d="M12 2l4 4h-3v9h-2V6H8l4-4zM5 12h2v7h10v-7h2v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7z"/>
-                  </svg>
-                </span>
-              </li>
-              <li>
-                <span>گزینه «Add to Home Screen»</span>
-                <span className="ios-icon" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
-                  </svg>
-                </span>
-              </li>
-              <li><span>روی «Add» بزنید</span></li>
-            </ol>
-            <button
-              type="button"
-              className="pwa-install-btn pwa-install-btn-secondary"
-              onClick={handleDismiss}
-            >
-              متوجه شدم
-            </button>
-          </div>
-        ) : (
         {mode === 'ios' && <IOSInstructions onClose={handleDismiss} />}
-
         {mode === 'android-manual' && <AndroidManualInstructions onClose={handleDismiss} />}
-
         {mode === 'desktop-manual' && <DesktopManualInstructions onClose={handleDismiss} />}
 
         {mode === 'native' && (
@@ -352,8 +261,6 @@ export default function InstallPrompt() {
     </div>
   );
 }
-
-/* ----- Sub-components ----- */
 
 function IOSInstructions({ onClose }) {
   return (
@@ -394,7 +301,7 @@ function AndroidManualInstructions({ onClose }) {
           <span>روی منوی سه‌نقطه مرورگر بزنید</span>
           <span className="ios-icon" aria-hidden="true">
             <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-              <circle cx="12" cy="5"  r="2" />
+              <circle cx="12" cy="5" r="2" />
               <circle cx="12" cy="12" r="2" />
               <circle cx="12" cy="19" r="2" />
             </svg>

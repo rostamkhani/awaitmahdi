@@ -31,24 +31,15 @@ if (typeof window !== 'undefined') {
     window.__pwaUpdate = updateSW;
   } catch {
     /* Virtual module not available (e.g. non-build env) */
-      onOfflineReady() {},
-      onNeedRefresh() {},
-    });
-    window.__pwaUpdate = updateSW;
-  } catch {
-    /* Virtual module not available */
   }
 }
 
 const hideSplash = () => {
-  const el = document.getElementById('app-splash');
-  if (!el) return;
-  el.classList.add('is-hidden');
-  setTimeout(() => el.remove(), 600);
   if (typeof window !== 'undefined' && typeof window.__hideAppSplash === 'function') {
     window.__hideAppSplash();
     return;
   }
+
   const el = document.getElementById('app-splash');
   if (!el) return;
   el.classList.add('is-hidden');
@@ -62,15 +53,6 @@ createRoot(document.getElementById('root')).render(
   </StrictMode>,
 )
 
-// Hide splash once React has committed the first paint
-if (typeof window !== 'undefined') {
-  if (document.readyState === 'complete') {
-    requestAnimationFrame(() => requestAnimationFrame(hideSplash));
-  } else {
-    window.addEventListener('load', () => {
-      requestAnimationFrame(() => requestAnimationFrame(hideSplash));
-    });
-  }
 // Hide the splash as soon as React has committed its first paint — we don't
 // wait for window.load (which waits for every image on the page).
 if (typeof window !== 'undefined') {

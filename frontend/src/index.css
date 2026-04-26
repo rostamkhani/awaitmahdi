@@ -77,10 +77,13 @@ body {
 
 .click-feedback {
   position: absolute;
-  bottom: 30px;
+  right: 0;
+  bottom: -18px;
+  font-family: 'Vazirmatn', system-ui, sans-serif;
   font-size: 1rem;
-  opacity: 0.8;
-  color: #a7ffeb;
+  font-weight: 300;
+  line-height: 1;
+  color: #7a7a7a;
   z-index: 10;
   pointer-events: none;
 }
@@ -92,6 +95,13 @@ body {
   align-items: center;
   gap: 15px;
   margin-top: 20px;
+}
+
+.today-stat-row {
+  width: 80%;
+  position: relative;
+  display: flex;
+  justify-content: center;
 }
 
 .stat-item {
@@ -331,8 +341,8 @@ body {
   }
 
   .click-feedback {
-    bottom: 12px;
     font-size: 0.85rem;
+    bottom: -10px;
   }
 
   .user-share {
