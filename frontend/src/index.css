@@ -84,8 +84,16 @@ body {
   font-weight: 300;
   line-height: 1;
   color: #7a7a7a;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
   z-index: 10;
   pointer-events: none;
+}
+
+.click-feedback.is-visible {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 .counter-display {

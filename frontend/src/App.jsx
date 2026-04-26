@@ -11,6 +11,7 @@ function App() {
   const [user, setUser] = useState(null);
   const [localCount, setLocalCount] = useState(0); // Unsaved clicks
   const [isClicked, setIsClicked] = useState(false); // Track click state for animation
+  const [isClickFeedbackVisible, setIsClickFeedbackVisible] = useState(false);
   
   // Initialize stats from cookie if available
   const [stats, setStats] = useState(() => {
@@ -39,6 +40,7 @@ function App() {
   const [showInfo, setShowInfo] = useState(false);
 
   const localCountRef = useRef(localCount);
+  const clickFeedbackTimerRef = useRef(null);
 
   // Keep ref updated for intervals/cleanup
   useEffect(() => {
@@ -82,6 +84,7 @@ function App() {
 
     return () => {
       clearInterval(heartbeatInterval);
+      if (clickFeedbackTimerRef.current) clearTimeout(clickFeedbackTimerRef.current);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
@@ -124,6 +127,15 @@ function App() {
 
   const handleClick = () => {
     setLocalCount(prev => prev + 1);
+    setIsClickFeedbackVisible(true);
+
+    if (clickFeedbackTimerRef.current) {
+      clearTimeout(clickFeedbackTimerRef.current);
+    }
+    clickFeedbackTimerRef.current = setTimeout(() => {
+      setIsClickFeedbackVisible(false);
+      clickFeedbackTimerRef.current = null;
+    }, 1600);
     
     // Trigger brightness animation
     setIsClicked(true);
@@ -211,7 +223,7 @@ function App() {
               </span>
             </div>
             {localCount > 0 && (
-              <div className="click-feedback">
+              <div className={`click-feedback ${isClickFeedbackVisible ? 'is-visible' : ''}`}>
                 (+{localCount})
               </div>
             )}
