@@ -79,6 +79,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.bearerAuth
@@ -88,6 +89,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import java.net.URI
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.UUID
@@ -112,6 +114,26 @@ private object Prefs {
     val AllTimeTotal = intPreferencesKey("all_time_total")
     val UserToday = intPreferencesKey("user_today")
     val UserTotal = intPreferencesKey("user_total")
+}
+
+private fun normalizeApiBaseUrl(rawUrl: String): String {
+    val trimmed = rawUrl.trim().removeSuffix("/")
+    if (trimmed.isBlank()) return BuildConfig.DEFAULT_API_BASE_URL
+
+    val withScheme = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        trimmed
+    } else {
+        "http://$trimmed"
+    }
+
+    return runCatching {
+        val uri = URI(withScheme)
+        val host = uri.host ?: return@runCatching withScheme
+        val scheme = uri.scheme ?: "http"
+        val port = if (uri.port == 5173 || uri.port == -1) 8000 else uri.port
+        val authority = if (port > 0) "$host:$port" else host
+        "$scheme://$authority"
+    }.getOrDefault(withScheme)
 }
 
 @Serializable
@@ -156,6 +178,7 @@ private data class AwaitMahdiState(
     val localCount: Int = 0,
     val isSyncing: Boolean = false,
     val errorMessage: String? = null,
+    val networkWarning: String? = null,
 ) {
     val displayToday: Int get() = stats.todayTotal + localCount
     val displayTotal: Int get() = stats.allTimeTotal + localCount
@@ -227,6 +250,11 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
 
     private val api = AwaitMahdiApi(
         HttpClient(Android) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 8_000
+                connectTimeoutMillis = 5_000
+                socketTimeoutMillis = 8_000
+            }
             install(ContentNegotiation) {
                 json(json)
             }
@@ -253,7 +281,7 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
                     guestUuid = guestUuid,
                     token = prefs[Prefs.Token],
                     user = if (username != null && userId != null) UserInfo(username, userId) else null,
-                    apiBaseUrl = prefs[Prefs.ApiBaseUrl] ?: BuildConfig.DEFAULT_API_BASE_URL,
+                    apiBaseUrl = normalizeApiBaseUrl(prefs[Prefs.ApiBaseUrl] ?: BuildConfig.DEFAULT_API_BASE_URL),
                     stats = Stats(
                         todayTotal = prefs[Prefs.TodayTotal] ?: 0,
                         allTimeTotal = prefs[Prefs.AllTimeTotal] ?: 0,
@@ -280,14 +308,18 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun clearError() {
-        updateVolatile(errorMessage = null)
+        updateVolatile(errorMessage = null, networkWarning = null)
+    }
+
+    fun clearNetworkWarning() {
+        updateVolatile(networkWarning = null)
     }
 
     fun saveApiBaseUrl(rawUrl: String) {
-        val normalized = rawUrl.trim().removeSuffix("/")
+        val normalized = normalizeApiBaseUrl(rawUrl)
         viewModelScope.launch {
             getApplication<Application>().dataStore.edit {
-                it[Prefs.ApiBaseUrl] = normalized.ifBlank { BuildConfig.DEFAULT_API_BASE_URL }
+                it[Prefs.ApiBaseUrl] = normalized
             }
             syncHeartbeat(0)
         }
@@ -354,9 +386,13 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
             }
             persistStatsIfMonotonic(stats)
             setLocalCount(newLocalCount)
-            updateVolatile(isSyncing = false, errorMessage = null)
+            updateVolatile(isSyncing = false, errorMessage = null, networkWarning = null)
         } catch (err: Throwable) {
-            updateVolatile(isSyncing = false, errorMessage = friendlyError(err))
+            updateVolatile(
+                isSyncing = false,
+                errorMessage = null,
+                networkWarning = null,
+            )
         }
     }
 
@@ -379,12 +415,14 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
         localCount: Int = state.value.localCount,
         isSyncing: Boolean = state.value.isSyncing,
         errorMessage: String? = state.value.errorMessage,
+        networkWarning: String? = state.value.networkWarning,
     ) {
         val current = _state.value
         _state.value = current.copy(
             localCount = localCount,
             isSyncing = isSyncing,
             errorMessage = errorMessage,
+            networkWarning = networkWarning,
         )
     }
 
@@ -545,6 +583,30 @@ private fun AwaitMahdiApp(viewModel: AwaitMahdiViewModel = viewModel()) {
                 strokeWidth = 2.dp,
             )
         }
+    }
+
+    state.networkWarning?.let {
+        AlertDialog(
+            onDismissRequest = viewModel::clearError,
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearError()
+                    showSettings = true
+                }) {
+                    Text("تنظیم آدرس")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::clearError) {
+                    Text("فعلاً نه")
+                }
+            },
+            title = { Text("اتصال به سرور", textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth()) },
+            text = { Text(it, textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth()) },
+            containerColor = Color(0xFF1E1E1E),
+            textContentColor = Color(0xFFCFCFCF),
+            titleContentColor = Color(0xFFE0E0E0),
+        )
     }
 
     state.errorMessage?.let {

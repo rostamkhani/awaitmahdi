@@ -10,11 +10,11 @@ android {
 
     defaultConfig {
         applicationId = "com.awaitmahdi.android"
-        minSdk = 24
+        minSdk = 23
         targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
-        buildConfigField("String", "DEFAULT_API_BASE_URL", "\"http://10.0.2.2:8000\"")
+        buildConfigField("String", "DEFAULT_API_BASE_URL", "\"http://10.104.123.63:8000\"")
 
         vectorDrawables {
             useSupportLibrary = true
