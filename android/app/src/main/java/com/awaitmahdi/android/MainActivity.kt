@@ -4,11 +4,9 @@ import android.app.Application
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -50,6 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
@@ -486,7 +485,8 @@ private fun AwaitMahdiApp(viewModel: AwaitMahdiViewModel = viewModel()) {
                 .padding(horizontal = 8.dp),
             contentAlignment = Alignment.Center,
         ) {
-            val isLandscape = maxHeight < 520.dp || maxWidth > maxHeight
+            val buttonMaxHeight = this.maxHeight
+            val isLandscape = buttonMaxHeight < 520.dp || maxWidth > buttonMaxHeight
             if (isLandscape) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
@@ -495,7 +495,7 @@ private fun AwaitMahdiApp(viewModel: AwaitMahdiViewModel = viewModel()) {
                 ) {
                     SalavatButton(
                         onClick = viewModel::onClickSalavat,
-                        size = (maxHeight * 0.64f).coerceIn(120.dp, 240.dp),
+                        size = (buttonMaxHeight * 0.64f).coerceIn(120.dp, 240.dp),
                     )
                     Spacer(Modifier.width(26.dp))
                     CounterPanel(state = state, compact = true)
@@ -690,6 +690,11 @@ private fun SalavatButton(
 private fun CounterPanel(state: AwaitMahdiState, compact: Boolean) {
     val valueSize = if (compact) 32.sp else 48.sp
     val labelSize = if (compact) 13.sp else 16.sp
+    val feedbackAlpha by animateFloatAsState(
+        targetValue = if (state.localCount > 0) 1f else 0f,
+        animationSpec = tween(durationMillis = 700),
+        label = "click-feedback-alpha",
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -698,19 +703,16 @@ private fun CounterPanel(state: AwaitMahdiState, compact: Boolean) {
     ) {
         Box(contentAlignment = Alignment.Center) {
             StatItem(label = "تعداد امروز", value = state.displayToday, valueSize = valueSize, labelSize = labelSize)
-            AnimatedVisibility(
-                visible = state.localCount > 0,
-                enter = fadeIn(tween(700)),
-                exit = fadeOut(tween(700)),
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(start = 6.dp),
-            ) {
+            if (state.localCount > 0 || feedbackAlpha > 0f) {
                 Text(
                     text = "(+${formatFaNumber(state.localCount)})",
                     color = Color(0xFF7A7A7A),
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Light,
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(start = 6.dp)
+                        .alpha(feedbackAlpha),
                 )
             }
         }
