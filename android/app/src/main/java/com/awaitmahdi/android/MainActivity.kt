@@ -89,6 +89,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import java.net.URI
 import java.text.NumberFormat
 import java.util.Locale
 import java.util.UUID
@@ -113,6 +114,26 @@ private object Prefs {
     val AllTimeTotal = intPreferencesKey("all_time_total")
     val UserToday = intPreferencesKey("user_today")
     val UserTotal = intPreferencesKey("user_total")
+}
+
+private fun normalizeApiBaseUrl(rawUrl: String): String {
+    val trimmed = rawUrl.trim().removeSuffix("/")
+    if (trimmed.isBlank()) return BuildConfig.DEFAULT_API_BASE_URL
+
+    val withScheme = if (trimmed.startsWith("http://") || trimmed.startsWith("https://")) {
+        trimmed
+    } else {
+        "http://$trimmed"
+    }
+
+    return runCatching {
+        val uri = URI(withScheme)
+        val host = uri.host ?: return@runCatching withScheme
+        val scheme = uri.scheme ?: "http"
+        val port = if (uri.port == 5173 || uri.port == -1) 8000 else uri.port
+        val authority = if (port > 0) "$host:$port" else host
+        "$scheme://$authority"
+    }.getOrDefault(withScheme)
 }
 
 @Serializable
@@ -260,7 +281,7 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
                     guestUuid = guestUuid,
                     token = prefs[Prefs.Token],
                     user = if (username != null && userId != null) UserInfo(username, userId) else null,
-                    apiBaseUrl = prefs[Prefs.ApiBaseUrl] ?: BuildConfig.DEFAULT_API_BASE_URL,
+                    apiBaseUrl = normalizeApiBaseUrl(prefs[Prefs.ApiBaseUrl] ?: BuildConfig.DEFAULT_API_BASE_URL),
                     stats = Stats(
                         todayTotal = prefs[Prefs.TodayTotal] ?: 0,
                         allTimeTotal = prefs[Prefs.AllTimeTotal] ?: 0,
@@ -295,10 +316,10 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun saveApiBaseUrl(rawUrl: String) {
-        val normalized = rawUrl.trim().removeSuffix("/")
+        val normalized = normalizeApiBaseUrl(rawUrl)
         viewModelScope.launch {
             getApplication<Application>().dataStore.edit {
-                it[Prefs.ApiBaseUrl] = normalized.ifBlank { BuildConfig.DEFAULT_API_BASE_URL }
+                it[Prefs.ApiBaseUrl] = normalized
             }
             syncHeartbeat(0)
         }
@@ -370,7 +391,7 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
             updateVolatile(
                 isSyncing = false,
                 errorMessage = null,
-                networkWarning = "اتصال به بک‌اند برقرار نیست. اگر روی گوشی واقعی نصب کرده‌اید، از تنظیمات آدرس IP سرور را وارد کنید.",
+                networkWarning = null,
             )
         }
     }
