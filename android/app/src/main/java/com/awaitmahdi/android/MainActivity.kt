@@ -79,6 +79,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.bearerAuth
@@ -156,6 +157,7 @@ private data class AwaitMahdiState(
     val localCount: Int = 0,
     val isSyncing: Boolean = false,
     val errorMessage: String? = null,
+    val networkWarning: String? = null,
 ) {
     val displayToday: Int get() = stats.todayTotal + localCount
     val displayTotal: Int get() = stats.allTimeTotal + localCount
@@ -227,6 +229,11 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
 
     private val api = AwaitMahdiApi(
         HttpClient(Android) {
+            install(HttpTimeout) {
+                requestTimeoutMillis = 8_000
+                connectTimeoutMillis = 5_000
+                socketTimeoutMillis = 8_000
+            }
             install(ContentNegotiation) {
                 json(json)
             }
@@ -280,7 +287,11 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
     }
 
     fun clearError() {
-        updateVolatile(errorMessage = null)
+        updateVolatile(errorMessage = null, networkWarning = null)
+    }
+
+    fun clearNetworkWarning() {
+        updateVolatile(networkWarning = null)
     }
 
     fun saveApiBaseUrl(rawUrl: String) {
@@ -354,9 +365,13 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
             }
             persistStatsIfMonotonic(stats)
             setLocalCount(newLocalCount)
-            updateVolatile(isSyncing = false, errorMessage = null)
+            updateVolatile(isSyncing = false, errorMessage = null, networkWarning = null)
         } catch (err: Throwable) {
-            updateVolatile(isSyncing = false, errorMessage = friendlyError(err))
+            updateVolatile(
+                isSyncing = false,
+                errorMessage = null,
+                networkWarning = "اتصال به بک‌اند برقرار نیست. اگر روی گوشی واقعی نصب کرده‌اید، از تنظیمات آدرس IP سرور را وارد کنید.",
+            )
         }
     }
 
@@ -379,12 +394,14 @@ private class AwaitMahdiViewModel(application: Application) : AndroidViewModel(a
         localCount: Int = state.value.localCount,
         isSyncing: Boolean = state.value.isSyncing,
         errorMessage: String? = state.value.errorMessage,
+        networkWarning: String? = state.value.networkWarning,
     ) {
         val current = _state.value
         _state.value = current.copy(
             localCount = localCount,
             isSyncing = isSyncing,
             errorMessage = errorMessage,
+            networkWarning = networkWarning,
         )
     }
 
@@ -545,6 +562,30 @@ private fun AwaitMahdiApp(viewModel: AwaitMahdiViewModel = viewModel()) {
                 strokeWidth = 2.dp,
             )
         }
+    }
+
+    state.networkWarning?.let {
+        AlertDialog(
+            onDismissRequest = viewModel::clearError,
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.clearError()
+                    showSettings = true
+                }) {
+                    Text("تنظیم آدرس")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = viewModel::clearError) {
+                    Text("فعلاً نه")
+                }
+            },
+            title = { Text("اتصال به سرور", textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth()) },
+            text = { Text(it, textAlign = TextAlign.Right, modifier = Modifier.fillMaxWidth()) },
+            containerColor = Color(0xFF1E1E1E),
+            textContentColor = Color(0xFFCFCFCF),
+            titleContentColor = Color(0xFFE0E0E0),
+        )
     }
 
     state.errorMessage?.let {
